@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { getArticles } from "@/lib/api";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import ArticleListHeader from "./ArticleListHeader";
 import ArticleCard from "./ArticleCard";
@@ -13,7 +14,7 @@ interface Article {
 }
 
 interface ArticleListProps {
-  articles?: Article[];
+  selectedFeedId?: string;
   selectedArticleId?: string;
   onArticleSelect?: (articleId: string) => void;
   sortOrder?: "asc" | "desc";
@@ -23,35 +24,7 @@ interface ArticleListProps {
 }
 
 const ArticleList = ({
-  articles = [
-    {
-      id: "1",
-      title: "The Future of AI in 2024",
-      excerpt:
-        "Exploring the latest developments in artificial intelligence and what they mean for the tech industry...",
-      date: new Date(),
-      isRead: false,
-      feedTitle: "TechCrunch",
-    },
-    {
-      id: "2",
-      title: "New Breakthrough in Quantum Computing",
-      excerpt:
-        "Scientists have achieved a major milestone in quantum computing with implications for cryptography...",
-      date: new Date(Date.now() - 86400000),
-      isRead: true,
-      feedTitle: "The Verge",
-    },
-    {
-      id: "3",
-      title: "Global Markets Update",
-      excerpt:
-        "Markets show resilience amid economic uncertainties as tech stocks continue to perform well...",
-      date: new Date(Date.now() - 172800000),
-      isRead: false,
-      feedTitle: "Reuters",
-    },
-  ],
+  selectedFeedId,
   selectedArticleId = "",
   onArticleSelect = () => {},
   sortOrder = "desc",
@@ -59,6 +32,30 @@ const ArticleList = ({
   onSortOrderChange = () => {},
   onViewModeChange = () => {},
 }: ArticleListProps) => {
+  const [articles, setArticles] = useState<Article[]>([]);
+
+  useEffect(() => {
+    loadArticles();
+  }, [selectedFeedId]);
+
+  const loadArticles = async () => {
+    try {
+      const data = await getArticles(selectedFeedId);
+      setArticles(
+        data.map((article) => ({
+          id: article.id,
+          title: article.title,
+          excerpt: article.excerpt || "",
+          date: new Date(article.published_at || article.created_at),
+          isRead: article.is_read,
+          feedTitle: article.feed.title,
+        })),
+      );
+    } catch (error) {
+      console.error("Error loading articles:", error);
+    }
+  };
+
   return (
     <div className="w-[380px] h-[982px] bg-background border-r flex flex-col">
       <ArticleListHeader
@@ -75,12 +72,7 @@ const ArticleList = ({
           {articles.map((article) => (
             <ArticleCard
               key={article.id}
-              id={article.id}
-              title={article.title}
-              excerpt={article.excerpt}
-              date={article.date}
-              isRead={article.isRead}
-              feedTitle={article.feedTitle}
+              {...article}
               onClick={() => onArticleSelect(article.id)}
             />
           ))}

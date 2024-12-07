@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
+import { getFolders, createFeed } from "@/lib/api";
 import AddFeedButton from "./AddFeedButton";
 import AddFeedDialog from "./AddFeedDialog";
 import FeedList from "./FeedList";
@@ -16,12 +17,30 @@ const Sidebar = ({
   onFeedSelect = () => {},
   onFeedSettings = () => {},
 }: SidebarProps) => {
+  const [folders, setFolders] = useState([]);
   const [searchQuery, setSearchQuery] = React.useState("");
   const [isAddFeedDialogOpen, setIsAddFeedDialogOpen] = React.useState(false);
 
-  const handleAddFeed = (url: string) => {
-    // Placeholder for feed addition logic
-    console.log("Adding feed:", url);
+  useEffect(() => {
+    loadFolders();
+  }, []);
+
+  const loadFolders = async () => {
+    try {
+      const data = await getFolders();
+      setFolders(data);
+    } catch (error) {
+      console.error("Error loading folders:", error);
+    }
+  };
+
+  const handleAddFeed = async (url: string) => {
+    try {
+      await createFeed({ title: url, url }); // We'll update the title after fetching the feed
+      loadFolders(); // Reload the folders to get the new feed
+    } catch (error) {
+      console.error("Error adding feed:", error);
+    }
   };
 
   return (
@@ -41,6 +60,7 @@ const Sidebar = ({
 
       <div className="flex-1 overflow-hidden">
         <FeedList
+          folders={folders}
           selectedFeedId={selectedFeedId}
           onFeedSelect={onFeedSelect}
           onFeedSettings={onFeedSettings}

@@ -33,8 +33,9 @@ export function useFeeds(folderId?: string) {
       url: string;
       folderId?: string;
     }) => {
-      // Extract title from URL for now, backend will update it later
-      const title = new URL(url).hostname;
+      // Extract domain name from URL to use as initial title
+      const domain = new URL(url).hostname.replace("www.", "");
+      const title = domain.charAt(0).toUpperCase() + domain.slice(1);
 
       const { data, error } = await supabase
         .from("feeds")
@@ -113,14 +114,14 @@ export function useFeeds(folderId?: string) {
 
       if (updateError) throw updateError;
 
-      // Create a sample article for demo
+      // Create a demo article
       const { error: articlesError } = await supabase.from("articles").insert([
         {
-          title: "Sample Article",
-          url: feed.url,
-          author: "Demo Author",
-          content: "<p>This is a sample article content.</p>",
-          excerpt: "Sample excerpt",
+          title: `New Article from ${feed.title}`,
+          url: `${feed.url}#${Date.now()}`,
+          author: "Feed Author",
+          content: `<h1>New Article</h1><p>This is a new article from ${feed.title}.</p><p>Posted at ${new Date().toLocaleString()}</p>`,
+          excerpt: `This is a new article from ${feed.title}.`,
           feed_id: id,
           published_at: new Date().toISOString(),
         },

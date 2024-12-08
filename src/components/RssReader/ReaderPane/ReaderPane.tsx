@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { markArticleAsRead, toggleBookmark } from "@/lib/api";
+import { useArticles } from "@/lib/hooks/use-articles";
 import ReaderHeader from "./ReaderHeader";
 import ArticleContent from "./ArticleContent";
 
@@ -14,17 +14,24 @@ interface Article {
 }
 
 interface ReaderPaneProps {
-  article?: Article;
+  selectedArticleId?: string;
   isDarkMode?: boolean;
   fontSize?: "small" | "medium" | "large";
   onThemeToggle?: () => void;
   onFontSizeChange?: (size: "small" | "medium" | "large") => void;
-  onShare?: () => void;
-  onBookmark?: () => void;
 }
 
 const ReaderPane = ({
-  article = {
+  selectedArticleId,
+  isDarkMode = false,
+  fontSize = "medium",
+  onThemeToggle = () => {},
+  onFontSizeChange = () => {},
+}: ReaderPaneProps) => {
+  const { markAsRead, toggleBookmark } = useArticles();
+
+  // Mock article for design view
+  const article = {
     id: "1",
     title: "The Future of Technology",
     author: "John Doe",
@@ -45,40 +52,20 @@ const ReaderPane = ({
     </div>`,
     feedTitle: "Tech Insights",
     is_bookmarked: false,
-  },
-  isDarkMode = false,
-  fontSize = "medium",
-  onThemeToggle = () => {},
-  onFontSizeChange = () => {},
-  onShare = () => {},
-  onBookmark = () => {},
-}: ReaderPaneProps) => {
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    if (article?.id) {
-      markArticleRead();
-    }
-  }, [article?.id]);
-
-  const markArticleRead = async () => {
-    if (typeof window === "undefined") return;
-
-    try {
-      await markArticleAsRead(article.id);
-    } catch (error) {
-      console.error("Error marking article as read:", error);
-    }
   };
 
-  const handleBookmark = async () => {
-    if (typeof window === "undefined") return;
+  useEffect(() => {
+    if (selectedArticleId) {
+      markAsRead.mutate(selectedArticleId);
+    }
+  }, [selectedArticleId]);
 
-    try {
-      await toggleBookmark(article.id, article.is_bookmarked || false);
-      onBookmark();
-    } catch (error) {
-      console.error("Error toggling bookmark:", error);
+  const handleBookmark = async () => {
+    if (selectedArticleId) {
+      await toggleBookmark.mutateAsync({
+        articleId: selectedArticleId,
+        isBookmarked: article.is_bookmarked || false,
+      });
     }
   };
 
@@ -91,7 +78,6 @@ const ReaderPane = ({
         fontSize={fontSize}
         onThemeToggle={onThemeToggle}
         onFontSizeChange={onFontSizeChange}
-        onShare={onShare}
         onBookmark={handleBookmark}
       />
 

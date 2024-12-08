@@ -1,6 +1,5 @@
-import { supabase } from "./supabase";
+import { supabase } from "./supabase/client";
 import { Database } from "./database.types";
-import Parser from "rss-parser/dist/rss-parser.min.js";
 
 type Feed = Database["public"]["Tables"]["feeds"]["Row"];
 type Article = Database["public"]["Tables"]["articles"]["Row"];
@@ -10,13 +9,6 @@ type Folder = Database["public"]["Tables"]["folders"]["Row"];
 const corsProxy = import.meta.env.PROD
   ? "https://api.allorigins.win/raw?url="
   : "http://localhost:8080/proxy?url=";
-
-const parser = new Parser({
-  customFields: {
-    feed: ["subtitle"],
-    item: ["content:encoded", "media:content"],
-  },
-});
 
 // Mock data
 const MOCK_FOLDERS = [
@@ -64,37 +56,6 @@ const MOCK_FOLDERS = [
     ],
   },
 ];
-
-async function fetchAndParseFeed(url: string) {
-  // In development or test mode, return mock data if URL is invalid
-  if (!import.meta.env.PROD && !url.startsWith("http")) {
-    return getMockFeedData();
-  }
-
-  try {
-    const feed = await parser.parseURL(corsProxy + encodeURIComponent(url));
-    return {
-      title: feed.title || url,
-      items: feed.items.map((item) => ({
-        title: item.title || "Untitled",
-        url: item.link || "",
-        author: item.creator || item.author || "",
-        content: item.content || item["content:encoded"] || "",
-        excerpt: item.contentSnippet || "",
-        published_at: item.pubDate
-          ? new Date(item.pubDate).toISOString()
-          : new Date().toISOString(),
-      })),
-    };
-  } catch (error) {
-    console.error("Error parsing feed:", error);
-    // In development, return mock data on error
-    if (!import.meta.env.DEV) {
-      return getMockFeedData();
-    }
-    throw error;
-  }
-}
 
 // Mock data for development
 function getMockFeedData() {
@@ -207,102 +168,5 @@ export async function toggleBookmark(
     }
   } catch (error) {
     console.error("Error toggling bookmark:", error);
-  }
-}
-
-// Feeds
-export async function refreshFeed(feed_id: string) {
-  if (
-    import.meta.env.SSR ||
-    (import.meta.env.DEV && !import.meta.env.VITE_SUPABASE_URL)
-  ) {
-    // Return mock data in design view or development without API
-    return {
-      id: feed_id,
-      title: "Mock Feed",
-      url: "https://example.com/feed.xml",
-      last_fetched_at: new Date().toISOString(),
-    };
-  }
-
-  try {
-    // Get the feed
-    const { data: feed, error: feedError } = await supabase
-      .from("feeds")
-      .select("*")
-      .eq("id", feed_id)
-      .single();
-    if (feedError) throw feedError;
-
-    // Fetch and parse the feed
-    const feedData = await fetchAndParseFeed(feed.url);
-
-    // Update the feed title and last_fetched_at
-    const { error: updateError } = await supabase
-      .from("feeds")
-      .update({
-        title: feedData.title,
-        last_fetched_at: new Date().toISOString(),
-      })
-      .eq("id", feed_id);
-    if (updateError) throw updateError;
-
-    // Insert new articles
-    if (feedData.items.length > 0) {
-      const articles = feedData.items.map((item) => ({
-        ...item,
-        feed_id,
-      }));
-      const { error: articlesError } = await supabase
-        .from("articles")
-        .insert(articles);
-      if (articlesError) throw articlesError;
-    }
-
-    return feed;
-  } catch (error) {
-    console.error("Error refreshing feed:", error);
-    throw error;
-  }
-}
-
-export async function createFeed({
-  title,
-  url,
-  folder_id,
-}: {
-  title: string;
-  url: string;
-  folder_id?: string;
-}) {
-  try {
-    // First fetch and parse the feed
-    const feedData = await fetchAndParseFeed(url);
-
-    // Create the feed
-    const { data: feed, error: feedError } = await supabase
-      .from("feeds")
-      .insert({ title: feedData.title, url, folder_id })
-      .select()
-      .single();
-    if (feedError) throw feedError;
-
-    // Insert the articles
-    if (feedData.items.length > 0) {
-      const articles = feedData.items.map((item) => ({
-        ...item,
-        feed_id: feed.id,
-      }));
-
-      const { error: articlesError } = await supabase
-        .from("articles")
-        .insert(articles);
-      if (articlesError) throw articlesError;
-    }
-
-    return feed;
-  } catch (error) {
-    console.error("Error creating feed:", error);
-    throw error;
   }
 }

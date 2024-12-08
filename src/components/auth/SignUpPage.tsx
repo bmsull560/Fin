@@ -19,6 +19,7 @@ const SignUpPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("Starting sign up process...");
 
     if (password !== confirmPassword) {
       toast({
@@ -29,18 +30,33 @@ const SignUpPage = () => {
       return;
     }
 
+    if (password.length < 6) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Password must be at least 6 characters long",
+      });
+      return;
+    }
+
     try {
       setLoading(true);
+      console.log("Calling signUp function...");
       const { error } = await signUp(email, password);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Sign up error:", error);
+        throw error;
+      }
 
+      console.log("Sign up successful!");
       toast({
         title: "Success",
         description: "Please check your email to confirm your account",
       });
       navigate("/login");
     } catch (error) {
+      console.error("Sign up error caught:", error);
       toast({
         variant: "destructive",
         title: "Error",
@@ -89,10 +105,11 @@ const SignUpPage = () => {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Create a password"
+                placeholder="Create a password (min. 6 characters)"
                 className="w-full"
                 disabled={loading}
                 required
+                minLength={6}
               />
             </div>
 
@@ -107,6 +124,7 @@ const SignUpPage = () => {
                 className="w-full"
                 disabled={loading}
                 required
+                minLength={6}
               />
             </div>
 

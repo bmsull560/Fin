@@ -60,27 +60,49 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    return { error };
+    try {
+      console.log("Attempting sign in with:", { email });
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      console.log("Sign in response:", { data, error });
+      return { error };
+    } catch (err) {
+      console.error("Sign in error:", err);
+      return { error: err as AuthError };
+    }
   };
 
   const signUp = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
-      },
-    });
-    return { error };
+    try {
+      console.log("Attempting sign up with:", { email });
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}`,
+          data: {
+            email,
+          },
+        },
+      });
+      console.log("Sign up response:", { data, error });
+      return { error };
+    } catch (err) {
+      console.error("Sign up error:", err);
+      return { error: err as AuthError };
+    }
   };
 
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) throw error;
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+    } catch (err) {
+      console.error("Sign out error:", err);
+      throw err;
+    }
   };
 
   return (

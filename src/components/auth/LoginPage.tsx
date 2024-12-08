@@ -21,7 +21,8 @@ const LoginPage = () => {
     e.preventDefault();
     try {
       setLoading(true);
-      await signIn(email, password);
+      const { error } = await signIn(email, password);
+      if (error) throw error;
       navigate("/");
     } catch (error) {
       toast({

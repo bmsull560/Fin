@@ -31,7 +31,10 @@ const SignUpPage = () => {
 
     try {
       setLoading(true);
-      await signUp(email, password);
+      const { error } = await signUp(email, password);
+
+      if (error) throw error;
+
       toast({
         title: "Success",
         description: "Please check your email to confirm your account",

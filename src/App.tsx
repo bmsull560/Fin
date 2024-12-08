@@ -9,7 +9,7 @@ function App() {
     <Suspense fallback={<p>Loading...</p>}>
       <div className="min-h-screen flex flex-col">
         <Header />
-        <main className="flex-1 container mx-auto">
+        <main className="flex-1">
           <Routes>
             <Route path="/" element={<Home />} />
           </Routes>

@@ -61,12 +61,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signIn = async (email: string, password: string) => {
     try {
-      console.log("Attempting sign in with:", { email });
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
-      console.log("Sign in response:", { data, error });
       return { error };
     } catch (err) {
       console.error("Sign in error:", err);
@@ -76,18 +74,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signUp = async (email: string, password: string) => {
     try {
-      console.log("Attempting sign up with:", { email });
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}`,
+          emailRedirectTo: `${window.location.origin}/login`,
           data: {
             email,
           },
         },
       });
-      console.log("Sign up response:", { data, error });
+
+      // If no error but we got data.user, it means email confirmation is disabled
+      if (!error && data?.user && !data.session) {
+        return { error: new Error("Email confirmation required") as AuthError };
+      }
+
       return { error };
     } catch (err) {
       console.error("Sign up error:", err);

@@ -19,7 +19,6 @@ const SignUpPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Starting sign up process...");
 
     if (password !== confirmPassword) {
       toast({
@@ -41,22 +40,27 @@ const SignUpPage = () => {
 
     try {
       setLoading(true);
-      console.log("Calling signUp function...");
       const { error } = await signUp(email, password);
 
       if (error) {
-        console.error("Sign up error:", error);
+        if (error.message === "Email confirmation required") {
+          toast({
+            title: "Success",
+            description: "Please check your email to confirm your account",
+          });
+          navigate("/login");
+          return;
+        }
         throw error;
       }
 
-      console.log("Sign up successful!");
+      // If we get here, email confirmation is disabled
       toast({
         title: "Success",
-        description: "Please check your email to confirm your account",
+        description: "Account created successfully",
       });
       navigate("/login");
     } catch (error) {
-      console.error("Sign up error caught:", error);
       toast({
         variant: "destructive",
         title: "Error",

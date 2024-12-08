@@ -44,6 +44,7 @@ const ReaderPane = ({
       <p>Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.</p>
     </div>`,
     feedTitle: "Tech Insights",
+    is_bookmarked: false,
   },
   isDarkMode = false,
   fontSize = "medium",
@@ -53,12 +54,16 @@ const ReaderPane = ({
   onBookmark = () => {},
 }: ReaderPaneProps) => {
   useEffect(() => {
+    if (typeof window === "undefined") return;
+
     if (article?.id) {
       markArticleRead();
     }
   }, [article?.id]);
 
   const markArticleRead = async () => {
+    if (typeof window === "undefined") return;
+
     try {
       await markArticleAsRead(article.id);
     } catch (error) {
@@ -67,6 +72,8 @@ const ReaderPane = ({
   };
 
   const handleBookmark = async () => {
+    if (typeof window === "undefined") return;
+
     try {
       await toggleBookmark(article.id, article.is_bookmarked || false);
       onBookmark();

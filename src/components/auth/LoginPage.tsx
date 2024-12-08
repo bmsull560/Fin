@@ -11,8 +11,9 @@ import { supabase } from "@/lib/supabase";
 import { Separator } from "@/components/ui/separator";
 
 const LoginPage = () => {
-  const { signIn } = useAuth();
-  const navigate = useNavigate();
+  // Only use these hooks if we're not in the design view
+  const auth = typeof window !== "undefined" ? useAuth() : { signIn: () => {} };
+  const navigate = typeof window !== "undefined" ? useNavigate() : () => {};
   const { toast } = useToast();
 
   const [email, setEmail] = useState("");
@@ -21,9 +22,12 @@ const LoginPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    // Only proceed with auth in non-design view
+    if (typeof window === "undefined") return;
+
     try {
       setLoading(true);
-      const { error } = await signIn(email, password);
+      const { error } = await auth.signIn(email, password);
       if (error) throw error;
       navigate("/");
     } catch (error) {
@@ -39,6 +43,9 @@ const LoginPage = () => {
   };
 
   const handleOAuthLogin = async (provider: "google" | "github") => {
+    // Only proceed with auth in non-design view
+    if (typeof window === "undefined") return;
+
     try {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
@@ -115,6 +122,7 @@ const LoginPage = () => {
                 variant="link"
                 className="text-sm"
                 onClick={() => navigate("/reset-password")}
+                type="button"
               >
                 Forgot password?
               </Button>
@@ -146,6 +154,7 @@ const LoginPage = () => {
                 onClick={() => handleOAuthLogin("google")}
                 disabled={loading}
                 className="w-full"
+                type="button"
               >
                 <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
                   <path
@@ -173,6 +182,7 @@ const LoginPage = () => {
                 onClick={() => handleOAuthLogin("github")}
                 disabled={loading}
                 className="w-full"
+                type="button"
               >
                 <Github className="mr-2 h-4 w-4" />
                 GitHub
@@ -185,6 +195,7 @@ const LoginPage = () => {
                 variant="link"
                 className="text-sm"
                 onClick={() => navigate("/signup")}
+                type="button"
               >
                 Sign up
               </Button>

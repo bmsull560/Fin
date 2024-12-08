@@ -2,19 +2,21 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Rss, KeyRound } from "lucide-react";
+import { Rss } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
 
 const ResetPasswordPage = () => {
-  const navigate = useNavigate();
+  const navigate = typeof window !== "undefined" ? useNavigate() : () => {};
   const { toast } = useToast();
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (typeof window === "undefined") return;
+
     try {
       setLoading(true);
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
@@ -86,6 +88,7 @@ const ResetPasswordPage = () => {
               variant="link"
               className="text-sm"
               onClick={() => navigate("/login")}
+              type="button"
             >
               Back to login
             </Button>

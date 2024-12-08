@@ -9,7 +9,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/lib/supabase";
 
 const SignUpPage = () => {
-  const navigate = useNavigate();
+  const navigate = typeof window !== "undefined" ? useNavigate() : () => {};
   const { toast } = useToast();
 
   const [email, setEmail] = useState("");
@@ -19,6 +19,7 @@ const SignUpPage = () => {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (typeof window === "undefined") return;
 
     if (password !== confirmPassword) {
       toast({
@@ -154,6 +155,7 @@ const SignUpPage = () => {
                 variant="link"
                 className="text-sm"
                 onClick={() => navigate("/login")}
+                type="button"
               >
                 Sign in
               </Button>

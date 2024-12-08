@@ -13,6 +13,11 @@ import { AuthProvider, useAuth } from "./lib/auth.tsx";
 import { Toaster } from "./components/ui/toaster";
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
+  // In design view, always render children
+  if (typeof window === "undefined") {
+    return children;
+  }
+
   const { user, loading } = useAuth();
 
   if (loading) {
@@ -36,6 +41,11 @@ function Layout({ children }: { children: React.ReactNode }) {
 }
 
 function AuthLayout({ children }: { children: React.ReactNode }) {
+  // In design view, always render children
+  if (typeof window === "undefined") {
+    return children;
+  }
+
   const { user } = useAuth();
 
   if (user) {
@@ -123,6 +133,11 @@ function AppRoutes() {
 }
 
 function App() {
+  // In design view, don't wrap with AuthProvider
+  if (typeof window === "undefined") {
+    return <AppRoutes />;
+  }
+
   return (
     <AuthProvider>
       <AppRoutes />

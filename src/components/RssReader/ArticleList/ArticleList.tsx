@@ -23,6 +23,36 @@ interface ArticleListProps {
   onViewModeChange?: (mode: "grid" | "list") => void;
 }
 
+// Mock data for design view or development
+const MOCK_ARTICLES: Article[] = [
+  {
+    id: "1",
+    title: "Understanding RSS Feeds",
+    excerpt: "A comprehensive guide to RSS feeds and how they work...",
+    date: new Date(),
+    isRead: false,
+    feedTitle: "Tech Blog",
+  },
+  {
+    id: "2",
+    title: "The Future of Content Consumption",
+    excerpt:
+      "Exploring how RSS and other technologies shape our reading habits...",
+    date: new Date(Date.now() - 86400000),
+    isRead: true,
+    feedTitle: "Digital Trends",
+  },
+  {
+    id: "3",
+    title: "RSS vs Social Media",
+    excerpt:
+      "Comparing traditional RSS feeds with modern social media platforms...",
+    date: new Date(Date.now() - 172800000),
+    isRead: false,
+    feedTitle: "Tech Review",
+  },
+];
+
 const ArticleList = ({
   selectedFeedId,
   selectedArticleId = "",
@@ -35,6 +65,15 @@ const ArticleList = ({
   const [articles, setArticles] = useState<Article[]>([]);
 
   useEffect(() => {
+    // Use mock data in design view or development without API
+    if (
+      import.meta.env.SSR ||
+      (import.meta.env.DEV && !import.meta.env.VITE_SUPABASE_URL)
+    ) {
+      setArticles(MOCK_ARTICLES);
+      return;
+    }
+
     loadArticles();
   }, [selectedFeedId]);
 
@@ -53,6 +92,10 @@ const ArticleList = ({
       );
     } catch (error) {
       console.error("Error loading articles:", error);
+      // Fallback to mock data in development
+      if (import.meta.env.DEV) {
+        setArticles(MOCK_ARTICLES);
+      }
     }
   };
 

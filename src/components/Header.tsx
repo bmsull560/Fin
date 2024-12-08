@@ -131,7 +131,10 @@ const Header = () => {
               <Download className="h-4 w-4" />
               Download the App
             </Button>
-            <Button className="gap-2">
+            <Button
+              className="gap-2"
+              onClick={() => (window.location.href = "/login")}
+            >
               <LogIn className="h-4 w-4" />
               Sign Up/Login
             </Button>

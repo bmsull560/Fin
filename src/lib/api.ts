@@ -1,6 +1,6 @@
 import { supabase } from "./supabase";
 import { Database } from "./database.types";
-import Parser from "rss-parser";
+import Parser from "rss-parser/dist/rss-parser.min.js";
 
 type Feed = Database["public"]["Tables"]["feeds"]["Row"];
 type Folder = Database["public"]["Tables"]["folders"]["Row"];
@@ -8,7 +8,12 @@ type Article = Database["public"]["Tables"]["articles"]["Row"];
 type ArticleRead = Database["public"]["Tables"]["article_reads"]["Row"];
 type Bookmark = Database["public"]["Tables"]["bookmarks"]["Row"];
 
-const parser = new Parser();
+const parser = new Parser({
+  customFields: {
+    feed: ["subtitle"],
+    item: ["content:encoded", "media:content"],
+  },
+});
 
 async function fetchAndParseFeed(url: string) {
   try {

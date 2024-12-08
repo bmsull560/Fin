@@ -3,22 +3,13 @@ import { useArticles } from "@/lib/hooks/use-articles";
 import ReaderHeader from "./ReaderHeader";
 import ArticleContent from "./ArticleContent";
 
-interface Article {
-  id: string;
-  title: string;
-  author: string;
-  date: Date;
-  content: string;
-  feedTitle: string;
-  is_bookmarked?: boolean;
-}
-
 interface ReaderPaneProps {
   selectedArticleId?: string;
   isDarkMode?: boolean;
   fontSize?: "small" | "medium" | "large";
   onThemeToggle?: () => void;
   onFontSizeChange?: (size: "small" | "medium" | "large") => void;
+  onBookmark?: () => void;
 }
 
 const ReaderPane = ({
@@ -27,53 +18,44 @@ const ReaderPane = ({
   fontSize = "medium",
   onThemeToggle = () => {},
   onFontSizeChange = () => {},
+  onBookmark = () => {},
 }: ReaderPaneProps) => {
-  const { markAsRead, toggleBookmark } = useArticles();
+  const { articles, markAsRead, toggleBookmark } = useArticles();
 
-  // Mock article for design view
-  const article = {
-    id: "1",
-    title: "The Future of Technology",
-    author: "John Doe",
-    date: new Date(),
-    content: `<div>
-      <p>This is a sample article content with multiple paragraphs to demonstrate the layout and styling of the reader pane.</p>
-      <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
-      <img src="https://dummyimage.com/800x400/e0e0e0/666666&text=Article+Image" alt="Sample article image" />
-      <h2>Section Heading</h2>
-      <p>Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
-      <ul>
-        <li>List item one with some example text</li>
-        <li>List item two with additional content</li>
-        <li>List item three demonstrating bullet points</li>
-      </ul>
-      <blockquote>This is a sample blockquote that might appear in the article content.</blockquote>
-      <p>Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.</p>
-    </div>`,
-    feedTitle: "Tech Insights",
-    is_bookmarked: false,
-  };
+  const selectedArticle = React.useMemo(() => {
+    if (!selectedArticleId || !articles) return null;
+    return articles.find((article) => article.id === selectedArticleId);
+  }, [selectedArticleId, articles]);
 
   useEffect(() => {
     if (selectedArticleId) {
       markAsRead.mutate(selectedArticleId);
     }
-  }, [selectedArticleId]);
+  }, [selectedArticleId, markAsRead]);
 
   const handleBookmark = async () => {
-    if (selectedArticleId) {
+    if (selectedArticleId && selectedArticle) {
       await toggleBookmark.mutateAsync({
         articleId: selectedArticleId,
-        isBookmarked: article.is_bookmarked || false,
+        isBookmarked: selectedArticle.is_bookmarked || false,
       });
+      onBookmark();
     }
   };
+
+  if (!selectedArticle) {
+    return (
+      <div className="h-full flex items-center justify-center text-muted-foreground">
+        Select an article to read
+      </div>
+    );
+  }
 
   return (
     <div className="h-full flex flex-col bg-background">
       <ReaderHeader
-        title={article.title}
-        feedTitle={article.feedTitle}
+        title={selectedArticle.title}
+        feedTitle={selectedArticle.feed?.title || "Unknown Feed"}
         isDarkMode={isDarkMode}
         fontSize={fontSize}
         onThemeToggle={onThemeToggle}
@@ -83,11 +65,13 @@ const ReaderPane = ({
 
       <div className="flex-1 overflow-hidden">
         <ArticleContent
-          title={article.title}
-          author={article.author}
-          date={article.date}
-          content={article.content}
-          feedTitle={article.feedTitle}
+          title={selectedArticle.title}
+          author={selectedArticle.author || "Unknown Author"}
+          date={
+            new Date(selectedArticle.published_at || selectedArticle.created_at)
+          }
+          content={selectedArticle.content || ""}
+          feedTitle={selectedArticle.feed?.title || "Unknown Feed"}
           fontSize={fontSize}
         />
       </div>

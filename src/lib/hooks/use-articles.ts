@@ -3,19 +3,32 @@ import { supabase } from "../supabase/client";
 import { useAuth } from "../auth/auth-provider";
 import { Database } from "../supabase/database.types";
 
-type Article = Database["public"]["Tables"]["articles"]["Row"];
+type ArticleRow = Database["public"]["Tables"]["articles"]["Row"];
+type FeedRow = Database["public"]["Tables"]["feeds"]["Row"];
+
+export interface Article extends ArticleRow {
+  feed?: FeedRow;
+  is_read?: boolean;
+  is_bookmarked?: boolean;
+}
+
+type ArticleResponse = ArticleRow & {
+  feed: FeedRow[];
+  is_read: { id: string }[];
+  is_bookmarked: { id: string }[];
+};
 
 export function useArticles(feedId?: string) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  const { data: articles = [], isLoading } = useQuery<Article[]>({
+  const { data: articles = [], isLoading } = useQuery<Article[], Error>({
     queryKey: ["articles", feedId],
     queryFn: async () => {
       let query = supabase
         .from("articles")
         .select(
-          "*, feed:feeds(title), is_read:article_reads(*), is_bookmarked:bookmarks(*)",
+          "*, feed:feeds(*), is_read:article_reads(*), is_bookmarked:bookmarks(*)",
         )
         .order("published_at", { ascending: false });
 
@@ -26,8 +39,11 @@ export function useArticles(feedId?: string) {
       const { data, error } = await query;
       if (error) throw error;
 
-      return data.map((article) => ({
+      if (!data) return [];
+
+      return (data as ArticleResponse[]).map((article) => ({
         ...article,
+        feed: article.feed?.[0],
         is_read: article.is_read?.length > 0,
         is_bookmarked: article.is_bookmarked?.length > 0,
       }));
@@ -35,7 +51,7 @@ export function useArticles(feedId?: string) {
     enabled: !!user,
   });
 
-  const markAsRead = useMutation({
+  const markAsRead = useMutation<void, Error, string>({
     mutationFn: async (articleId: string) => {
       const { error } = await supabase
         .from("article_reads")
@@ -48,14 +64,12 @@ export function useArticles(feedId?: string) {
     },
   });
 
-  const toggleBookmark = useMutation({
-    mutationFn: async ({
-      articleId,
-      isBookmarked,
-    }: {
-      articleId: string;
-      isBookmarked: boolean;
-    }) => {
+  const toggleBookmark = useMutation<
+    void,
+    Error,
+    { articleId: string; isBookmarked: boolean }
+  >({
+    mutationFn: async ({ articleId, isBookmarked }) => {
       if (isBookmarked) {
         const { error } = await supabase
           .from("bookmarks")

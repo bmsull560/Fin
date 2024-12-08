@@ -33,12 +33,14 @@ export function useFeeds(folderId?: string) {
       url: string;
       folderId?: string;
     }) => {
-      // For demo, just create a feed with the URL as title
+      // Extract title from URL for now, backend will update it later
+      const title = new URL(url).hostname;
+
       const { data, error } = await supabase
         .from("feeds")
         .insert([
           {
-            title: new URL(url).hostname,
+            title,
             url,
             folder_id: folderId,
             user_id: user!.id,
@@ -101,7 +103,7 @@ export function useFeeds(folderId?: string) {
 
       if (feedError) throw feedError;
 
-      // For demo, just update the last_fetched_at timestamp
+      // Update last_fetched_at timestamp
       const { error: updateError } = await supabase
         .from("feeds")
         .update({
@@ -111,7 +113,7 @@ export function useFeeds(folderId?: string) {
 
       if (updateError) throw updateError;
 
-      // For demo, create a sample article
+      // Create a sample article for demo
       const { error: articlesError } = await supabase.from("articles").insert([
         {
           title: "Sample Article",

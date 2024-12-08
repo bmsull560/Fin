@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { useRoutes, Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import Home from "./components/home";
 import Header from "./components/Header";
 import LoginPage from "./components/auth/LoginPage";
@@ -9,7 +9,6 @@ import ResetPasswordPage from "./components/auth/ResetPasswordPage";
 import UpdatePasswordPage from "./components/auth/UpdatePasswordPage";
 import LoadingScreen from "./components/ui/loading-screen";
 import FeedCatalog from "./components/discover/FeedCatalog";
-import routes from "tempo-routes";
 import { AuthProvider, useAuth } from "./lib/auth.tsx";
 import { Toaster } from "./components/ui/toaster";
 
@@ -27,32 +26,97 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
   return children;
 }
 
+function Layout({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="min-h-screen flex flex-col">
+      <Header />
+      <main className="flex-1">{children}</main>
+    </div>
+  );
+}
+
+function AuthLayout({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth();
+
+  if (user) {
+    return <Navigate to="/" />;
+  }
+
+  return children;
+}
+
 function AppRoutes() {
   return (
     <Suspense fallback={<LoadingScreen />}>
       <Routes>
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/signup" element={<SignUpPage />} />
-        <Route path="/reset-password" element={<ResetPasswordPage />} />
-        <Route path="/update-password" element={<UpdatePasswordPage />} />
+        {/* Auth Routes */}
         <Route
-          path="/*"
+          path="login"
+          element={
+            <AuthLayout>
+              <LoginPage />
+            </AuthLayout>
+          }
+        />
+        <Route
+          path="signup"
+          element={
+            <AuthLayout>
+              <SignUpPage />
+            </AuthLayout>
+          }
+        />
+        <Route
+          path="reset-password"
+          element={
+            <AuthLayout>
+              <ResetPasswordPage />
+            </AuthLayout>
+          }
+        />
+        <Route
+          path="update-password"
+          element={
+            <AuthLayout>
+              <UpdatePasswordPage />
+            </AuthLayout>
+          }
+        />
+
+        {/* Protected Routes */}
+        <Route
+          path="/"
           element={
             <PrivateRoute>
-              <div className="min-h-screen flex flex-col">
-                <Header />
-                <main className="flex-1">
-                  <Routes>
-                    <Route path="/" element={<Home />} />
-                    <Route path="/discover" element={<FeedCatalog />} />
-                    <Route path="/settings" element={<SettingsLayout />} />
-                  </Routes>
-                  {import.meta.env.VITE_TEMPO === "true" && useRoutes(routes)}
-                </main>
-              </div>
+              <Layout>
+                <Home />
+              </Layout>
             </PrivateRoute>
           }
         />
+        <Route
+          path="discover"
+          element={
+            <PrivateRoute>
+              <Layout>
+                <FeedCatalog />
+              </Layout>
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="settings"
+          element={
+            <PrivateRoute>
+              <Layout>
+                <SettingsLayout />
+              </Layout>
+            </PrivateRoute>
+          }
+        />
+
+        {/* Catch all route */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Suspense>
   );

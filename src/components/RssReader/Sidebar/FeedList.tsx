@@ -2,7 +2,7 @@ import React from "react";
 import { RefreshCw, Rss, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { refreshFeed } from "@/lib/api";
+import { useFeeds } from "@/lib/hooks/use-feeds";
 import {
   Accordion,
   AccordionContent,
@@ -30,12 +30,13 @@ const FeedList = ({
   onFeedSettings = () => {},
 }: FeedListProps) => {
   const [refreshingFeeds, setRefreshingFeeds] = React.useState<string[]>([]);
+  const { refreshFeed } = useFeeds();
 
   const handleRefreshFeed = async (feedId: string, e: React.MouseEvent) => {
     e.stopPropagation();
     try {
       setRefreshingFeeds((prev) => [...prev, feedId]);
-      await refreshFeed(feedId);
+      await refreshFeed.mutateAsync(feedId);
     } catch (error) {
       console.error("Error refreshing feed:", error);
     } finally {

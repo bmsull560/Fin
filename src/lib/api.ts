@@ -170,3 +170,75 @@ export async function toggleBookmark(
     console.error("Error toggling bookmark:", error);
   }
 }
+
+// Feeds
+export async function createFeed({
+  url,
+  folderId,
+}: {
+  url: string;
+  folderId?: string;
+}) {
+  try {
+    const { data, error } = await supabase
+      .from("feeds")
+      .insert([
+        {
+          title: new URL(url).hostname,
+          url,
+          folder_id: folderId,
+        },
+      ])
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error("Error creating feed:", error);
+    throw error;
+  }
+}
+
+export async function refreshFeed(id: string) {
+  try {
+    // Get the feed
+    const { data: feed, error: feedError } = await supabase
+      .from("feeds")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if (feedError) throw feedError;
+
+    // For demo, just update the last_fetched_at timestamp
+    const { error: updateError } = await supabase
+      .from("feeds")
+      .update({
+        last_fetched_at: new Date().toISOString(),
+      })
+      .eq("id", id);
+
+    if (updateError) throw updateError;
+
+    // For demo, create a sample article
+    const { error: articlesError } = await supabase.from("articles").insert([
+      {
+        title: "Sample Article",
+        url: feed.url,
+        author: "Demo Author",
+        content: "<p>This is a sample article content.</p>",
+        excerpt: "Sample excerpt",
+        feed_id: id,
+        published_at: new Date().toISOString(),
+      },
+    ]);
+
+    if (articlesError) throw articlesError;
+
+    return feed;
+  } catch (error) {
+    console.error("Error refreshing feed:", error);
+    throw error;
+  }
+}

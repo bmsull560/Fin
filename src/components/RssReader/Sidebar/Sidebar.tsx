@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
-import { getFolders, createFeed } from "@/lib/api";
+import { getFolders } from "@/lib/api";
 import AddFeedButton from "./AddFeedButton";
 import AddFeedDialog from "./AddFeedDialog";
 import FeedList from "./FeedList";
+import { useFeeds } from "@/lib/hooks/use-feeds";
 
 interface SidebarProps {
   selectedFeedId?: string;
@@ -20,6 +21,7 @@ const Sidebar = ({
   const [folders, setFolders] = useState([]);
   const [searchQuery, setSearchQuery] = React.useState("");
   const [isAddFeedDialogOpen, setIsAddFeedDialogOpen] = React.useState(false);
+  const { createFeed } = useFeeds();
 
   useEffect(() => {
     loadFolders();
@@ -36,7 +38,7 @@ const Sidebar = ({
 
   const handleAddFeed = async (url: string) => {
     try {
-      await createFeed({ title: url, url });
+      await createFeed.mutateAsync({ title: url, url });
       loadFolders();
     } catch (error) {
       console.error("Error adding feed:", error);
@@ -45,7 +47,7 @@ const Sidebar = ({
 
   return (
     <div className="h-full flex flex-col bg-background">
-      <div className="p-4 space-y-4 border-b">
+      <div className="p-4 space-y-4">
         <div className="relative">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input

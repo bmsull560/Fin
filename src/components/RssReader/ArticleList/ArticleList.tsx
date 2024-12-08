@@ -63,6 +63,7 @@ const ArticleList = ({
   onViewModeChange = () => {},
 }: ArticleListProps) => {
   const [articles, setArticles] = useState<Article[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     // Use mock data in design view or development without API
@@ -71,6 +72,7 @@ const ArticleList = ({
       (import.meta.env.DEV && !import.meta.env.VITE_SUPABASE_URL)
     ) {
       setArticles(MOCK_ARTICLES);
+      setLoading(false);
       return;
     }
 
@@ -79,6 +81,7 @@ const ArticleList = ({
 
   const loadArticles = async () => {
     try {
+      setLoading(true);
       const data = await getArticles(selectedFeedId);
       setArticles(
         data.map((article) => ({
@@ -96,6 +99,8 @@ const ArticleList = ({
       if (import.meta.env.DEV) {
         setArticles(MOCK_ARTICLES);
       }
+    } finally {
+      setLoading(false);
     }
   };
 

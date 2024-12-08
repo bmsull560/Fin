@@ -3,16 +3,6 @@ import { supabase } from "../supabase/client";
 import { useAuth } from "../auth/auth-provider";
 import { Database } from "../supabase/database.types";
 
-// Import the ESM version and configure without event emitter
-let Parser: any;
-
-// Use dynamic import to avoid SSR issues
-if (typeof window !== "undefined") {
-  import("rss-parser/dist/rss-parser.min.js").then((module) => {
-    Parser = module.default;
-  });
-}
-
 type Feed = Database["public"]["Tables"]["feeds"]["Row"];
 
 export function useFeeds(folderId?: string) {
@@ -43,23 +33,12 @@ export function useFeeds(folderId?: string) {
       url: string;
       folderId?: string;
     }) => {
-      // First fetch and parse the feed
-      const parser = new Parser({
-        customFields: {
-          feed: ["subtitle"],
-          item: ["content:encoded", "media:content"],
-        },
-      });
-
-      const feed = await parser.parseURL(
-        `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
-      );
-
+      // For demo, just create a feed with the URL as title
       const { data, error } = await supabase
         .from("feeds")
         .insert([
           {
-            title: feed.title || url,
+            title: new URL(url).hostname,
             url,
             folder_id: folderId,
             user_id: user!.id,
@@ -122,50 +101,30 @@ export function useFeeds(folderId?: string) {
 
       if (feedError) throw feedError;
 
-      // Create a new parser instance for each refresh
-      const parser = new Parser({
-        customFields: {
-          feed: ["subtitle"],
-          item: ["content:encoded", "media:content"],
-        },
-      });
-
-      // Fetch and parse the feed
-      const parsedFeed = await parser.parseURL(
-        `https://api.allorigins.win/raw?url=${encodeURIComponent(feed.url)}`,
-      );
-
-      // Update the feed title and last_fetched_at
+      // For demo, just update the last_fetched_at timestamp
       const { error: updateError } = await supabase
         .from("feeds")
         .update({
-          title: parsedFeed.title || feed.url,
           last_fetched_at: new Date().toISOString(),
         })
         .eq("id", id);
 
       if (updateError) throw updateError;
 
-      // Insert new articles
-      if (parsedFeed.items.length > 0) {
-        const articles = parsedFeed.items.map((item: any) => ({
-          title: item.title || "Untitled",
-          url: item.link || "",
-          author: item.creator || item.author || "",
-          content: item.content || item["content:encoded"] || "",
-          excerpt: item.contentSnippet || "",
+      // For demo, create a sample article
+      const { error: articlesError } = await supabase.from("articles").insert([
+        {
+          title: "Sample Article",
+          url: feed.url,
+          author: "Demo Author",
+          content: "<p>This is a sample article content.</p>",
+          excerpt: "Sample excerpt",
           feed_id: id,
-          published_at: item.pubDate
-            ? new Date(item.pubDate).toISOString()
-            : new Date().toISOString(),
-        }));
+          published_at: new Date().toISOString(),
+        },
+      ]);
 
-        const { error: articlesError } = await supabase
-          .from("articles")
-          .insert(articles);
-
-        if (articlesError) throw articlesError;
-      }
+      if (articlesError) throw articlesError;
 
       return feed;
     },

@@ -36,15 +36,15 @@ const Sidebar = ({
 
   const handleAddFeed = async (url: string) => {
     try {
-      await createFeed({ title: url, url }); // We'll update the title after fetching the feed
-      loadFolders(); // Reload the folders to get the new feed
+      await createFeed({ title: url, url });
+      loadFolders();
     } catch (error) {
       console.error("Error adding feed:", error);
     }
   };
 
   return (
-    <div className="w-[280px] h-[982px] bg-background border-r flex flex-col">
+    <div className="h-full flex flex-col bg-background">
       <div className="p-4 space-y-4 border-b">
         <div className="relative">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />

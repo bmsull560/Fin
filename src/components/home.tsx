@@ -18,7 +18,6 @@ const Home = () => {
 
   const handleFeedSelect = (feedId: string) => {
     setSelectedFeedId(feedId);
-    // Reset article selection when changing feeds
     setSelectedArticleId("");
   };
 
@@ -39,9 +38,18 @@ const Home = () => {
   };
 
   return (
-    <div className="w-screen h-screen bg-background">
-      <ResizablePanelGroup direction="horizontal">
-        <ResizablePanel defaultSize={20} minSize={15} maxSize={30}>
+    <div className="h-[calc(100vh-4rem)] bg-background">
+      <ResizablePanelGroup
+        direction="horizontal"
+        className="min-h-full rounded-lg border"
+      >
+        {/* Sidebar Panel */}
+        <ResizablePanel
+          defaultSize={20}
+          minSize={15}
+          maxSize={30}
+          className="hidden md:block"
+        >
           <Sidebar
             selectedFeedId={selectedFeedId}
             onFeedSelect={handleFeedSelect}
@@ -51,15 +59,23 @@ const Home = () => {
 
         <ResizableHandle />
 
-        <ResizablePanel defaultSize={30} minSize={20} maxSize={40}>
+        {/* Article List Panel */}
+        <ResizablePanel
+          defaultSize={30}
+          minSize={20}
+          maxSize={40}
+          className="hidden md:block"
+        >
           <ArticleList
             selectedArticleId={selectedArticleId}
             onArticleSelect={handleArticleSelect}
+            selectedFeedId={selectedFeedId}
           />
         </ResizablePanel>
 
-        <ResizableHandle />
+        <ResizableHandle className="hidden md:block" />
 
+        {/* Reader Panel - Full width on mobile */}
         <ResizablePanel defaultSize={50} minSize={30}>
           <ReaderPane
             isDarkMode={isDarkMode}
@@ -71,6 +87,31 @@ const Home = () => {
           />
         </ResizablePanel>
       </ResizablePanelGroup>
+
+      {/* Mobile Navigation */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 border-t bg-background p-2 flex justify-around">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => console.log("Show feeds")}
+        >
+          <Rss className="h-5 w-5" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => console.log("Show articles")}
+        >
+          <ListStart className="h-5 w-5" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => console.log("Show settings")}
+        >
+          <Settings2 className="h-5 w-5" />
+        </Button>
+      </div>
     </div>
   );
 };

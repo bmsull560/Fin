@@ -1,6 +1,5 @@
 import React, { useEffect } from "react";
 import { markArticleAsRead, toggleBookmark } from "@/lib/api";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import ReaderHeader from "./ReaderHeader";
 import ArticleContent from "./ArticleContent";
 
@@ -51,6 +50,7 @@ const ReaderPane = ({
   onThemeToggle = () => {},
   onFontSizeChange = () => {},
   onShare = () => {},
+  onBookmark = () => {},
 }: ReaderPaneProps) => {
   useEffect(() => {
     if (article?.id) {
@@ -69,13 +69,14 @@ const ReaderPane = ({
   const handleBookmark = async () => {
     try {
       await toggleBookmark(article.id, article.is_bookmarked || false);
+      onBookmark();
     } catch (error) {
       console.error("Error toggling bookmark:", error);
     }
   };
 
   return (
-    <div className="w-[852px] h-[982px] bg-background border-l flex flex-col">
+    <div className="h-full flex flex-col bg-background">
       <ReaderHeader
         title={article.title}
         feedTitle={article.feedTitle}

@@ -57,7 +57,7 @@ const ArticleList = ({
   };
 
   return (
-    <div className="w-[380px] h-[982px] bg-background border-r flex flex-col">
+    <div className="h-full flex flex-col bg-background">
       <ArticleListHeader
         sortOrder={sortOrder}
         viewMode={viewMode}

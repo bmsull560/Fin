@@ -6,9 +6,9 @@ import { Rss, ShieldCheck, Globe, Zap } from "lucide-react";
 import { useAuth } from "@/lib/auth.tsx";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/lib/supabase";
 
 const SignUpPage = () => {
-  const { signUp } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -17,7 +17,7 @@ const SignUpPage = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (password !== confirmPassword) {
@@ -40,27 +40,31 @@ const SignUpPage = () => {
 
     try {
       setLoading(true);
-      const { error } = await signUp(email, password);
+
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: window.location.origin,
+          data: {
+            email,
+          },
+        },
+      });
 
       if (error) {
-        if (error.message === "Email confirmation required") {
-          toast({
-            title: "Success",
-            description: "Please check your email to confirm your account",
-          });
-          navigate("/login");
-          return;
-        }
         throw error;
       }
 
-      // If we get here, email confirmation is disabled
-      toast({
-        title: "Success",
-        description: "Account created successfully",
-      });
-      navigate("/login");
+      if (data?.user) {
+        toast({
+          title: "Success",
+          description: "Please check your email to confirm your account",
+        });
+        navigate("/login");
+      }
     } catch (error) {
+      console.error("Signup error:", error);
       toast({
         variant: "destructive",
         title: "Error",
@@ -92,6 +96,7 @@ const SignUpPage = () => {
               <Label htmlFor="email">Email address</Label>
               <Input
                 id="email"
+                name="email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -106,6 +111,7 @@ const SignUpPage = () => {
               <Label htmlFor="password">Password</Label>
               <Input
                 id="password"
+                name="password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -121,6 +127,7 @@ const SignUpPage = () => {
               <Label htmlFor="confirmPassword">Confirm Password</Label>
               <Input
                 id="confirmPassword"
+                name="confirmPassword"
                 type="password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}

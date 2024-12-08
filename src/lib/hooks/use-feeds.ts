@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../supabase/client";
 import { useAuth } from "../auth/auth-provider";
-import { Database } from "../supabase/database.types";
+import { Database } from "../database.types";
 
 type Feed = Database["public"]["Tables"]["feeds"]["Row"];
 
